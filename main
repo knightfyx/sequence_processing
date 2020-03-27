@@ -1,0 +1,181 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<process.h>
+#include<direct.h>
+int main(int argc, char *argv[])
+{
+	FILE *igen, *icds, *ogen, *ocds, *omix;   //i为input，o为output
+	char name_gen[60][50]= { "" },name_cds[60][50]= { "" },seq_gen[60][7000] = { "" }, seq_cds[60][7000] = { "" }, temp[60][50] = { "" };
+	char addr[200] = "", addr1[200] = "", addr2[200] = "", iaddr1[20] = "", iaddr2[20] = "", tmp[200] = "";//当心过长路径
+	char *path1 = "\p_genomic", *path2 = "\p_cds";
+	char *probe;//用以判断输入路径是否为空
+	int gen_size = 0, cds_size = 0;
+	int rec[50] = { 0 };
+	float p = 0;
+	extern int autoseq(FILE *, char (*)[50], char (*)[7000]);
+	extern int f_output(FILE *, char(*)[50], char(*)[7000], int);
+	extern int seq_sort(char(*)[50], char(*)[50], int);
+	extern int name_check(char*, char*,float);
+	extern int seq_process(char*, char*);
+	int i = 0, j = 0, k = 0, c = 0, lable_c = 0, lable_g = 0, flag = 0, n = 0, suf = 0;
+	int sta1 = 0, sta2 = 0;
+	errno_t err=1;
+	strcpy_s(addr, argv[0]);
+	i = strlen(addr);
+	while (addr[i] != '\\')
+	{
+		addr[i] = '\0';
+		i--;
+	}
+	//获取当前路径
+	strcpy_s(addr1, addr); 
+	strcpy_s(addr2, addr);
+	strcat_s(addr1, path1);
+	strcat_s(addr2, path2);
+	printf("current working directory");
+	printf("%s", addr);
+	printf("\n");
+	sta1 = _mkdir(addr1);
+	sta2 = _mkdir(addr2);
+	(!sta1 && !sta2) ? (printf("directory created\n")) : (printf("unable\n"));//添加directory,addr1为genomic目录，addr2为cds
+	strcat_s(addr1, "\\p_genomic.txt");
+	strcat_s(addr2, "\\p_cds.txt");
+	fopen_s(&ogen,addr1, "w");
+	fopen_s(&ocds,addr2, "w");
+	//至此output文件打开完成，下面完成input文件打开工作
+	while (err == 1)
+	{
+		printf("please enter file name for genomic sequence input,default:genomic.fas\n");
+		probe = gets_s(iaddr1);
+		(*probe == '\0') ? strcpy_s(iaddr1, "genomic.fas") : NULL;
+		strcpy_s(tmp, addr);
+		strcat_s(tmp, iaddr1);
+		err=fopen_s(&igen, tmp, "r");
+		if (err == 0)
+		{
+			break;
+		}
+		else
+		{
+			printf("file not exist,plz re-input.");
+			err = 1;
+		}
+	}
+	err = 1;
+	//打开genomic
+	while (err == 1)
+	{
+		printf("please enter file name for cds sequence input,default:cds.fas\n");
+	    probe = gets_s(iaddr2);
+	    (*probe == '\0') ? strcpy_s(iaddr2, "cds.fas") : NULL;
+	    strcpy_s(tmp, addr);
+	    strcat_s(tmp, iaddr2);
+		err=fopen_s(&icds, tmp, "r");
+		if (err == 0)
+		{
+			break;
+		}
+		else
+		{
+			printf("file not exist,plz re-input.");
+			err = 1;
+		}
+	}
+	//打开cds
+	//至此input文件打开完成,下面完成工作
+	printf("genomic ");
+	gen_size = autoseq(igen, name_gen, seq_gen);//一定要注意返回值等于总数，行下标要-1
+	(gen_size == 0) ? (printf("problem on opening genomic fasta\n")) : NULL;
+	printf("cds ");
+	cds_size = autoseq(icds, name_cds, seq_cds);
+	(cds_size == 0) ? (printf("problem on opening cds fasta\n")) : NULL;
+	for (i = 0; i <= gen_size-1; i++)
+	{
+		name_gen[i][strlen(name_gen[i])] = (char)(i+1);
+	}
+	for (i = 0; i <= cds_size-1; i++)
+	{
+		name_cds[i][strlen(name_cds[i])] = (char)(i+1);
+	}
+	//记得还原
+	seq_sort(name_gen, temp, gen_size);
+	seq_sort(name_cds,temp, cds_size);
+	//从小到大排序
+	//输入比对致信值
+	i = 0;
+	while (!i)
+	{
+		printf("plz enter the similarity threshold for name checking,0.8-1\n");
+		scanf_s("%f", &p);
+		printf("\n");
+		printf("the threshold is%f,confirmed? 1 as true, 0 as false\n", p);
+		scanf_s("%d", &i);
+		printf("\n");
+	}
+	
+	j = 1;//避免溢出
+	for (i=0; i <= cds_size-1; )
+	{
+		suf = strcmp(name_cds[i], name_gen[j]);
+		if (suf<=0)
+		{
+			if (name_check(name_cds[i], name_gen[j-1],p))
+			{
+				lable_c = (int)name_cds[i][strlen(name_cds[i]) - 1]-1;
+				lable_g = (int)name_gen[j-1][strlen(name_gen[j-1]) - 1]-1;
+				flag = seq_process(seq_cds[lable_c], seq_gen[lable_g]);
+				!flag ? (printf("sequence error processing %s\n", name_cds[i])) : NULL;
+				i++; j++;
+			}
+			else if (name_check(name_cds[i], name_gen[j],p))
+			{
+				lable_c = (int)name_cds[i][strlen(name_cds[i]) - 1]-1;
+				lable_g = (int)name_gen[j][strlen(name_gen[j]) - 1]-1;
+				flag = seq_process(seq_cds[lable_c], seq_gen[lable_g]);
+				!flag ? (printf("sequence error processing %s\n", name_cds[i])) : NULL;
+				i++; j+=2;
+			}
+			else
+			{
+				lable_c = (int)name_cds[i][strlen(name_cds[i]) - 1] - 1;
+				_strupr_s(seq_cds[lable_c]);
+				printf("unpaired %s\n", name_cds[i]);
+				i++;
+				
+			}
+		}
+		else
+		{
+			j++;
+		}
+		if (i == cds_size || n == 1 || j == gen_size + 1)
+		{
+			break;
+		}
+		if (j == gen_size)
+		{
+			j -= 1;
+			n = 1;
+		}
+	}
+	//所有字符处理完毕，开始准备输出
+	for (i = 0; i <= cds_size - 1; i++)
+	{
+		lable_c = (int)name_cds[i][strlen(name_cds[i]) - 1]-1;
+		name_cds[i][strlen(name_cds[i]) - 1] = '\0';
+		strcpy_s(temp[lable_c], name_cds[i]);
+	}
+	f_output(ocds, temp, seq_cds,cds_size);
+	for (j = 0; j <= gen_size - 1; j++)
+	{
+		lable_g = (int)name_gen[j][strlen(name_gen[j]) - 1]-1;
+		name_gen[j][strlen(name_gen[j]) - 1] = '\0';
+		strcpy_s(temp[lable_g], name_gen[j]);
+	}
+	f_output(ogen, temp, seq_gen,gen_size);
+	printf("check for the record plz,thank you for using,see you next time.^^\n");
+	system("pause");
+	system("pause");
+	return 0;
+}
