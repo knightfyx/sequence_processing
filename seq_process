@@ -1,0 +1,63 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#pragma warning(disable:4996)
+int seq_process(char*cds, char*gen) 
+{
+	int  j = 0, n=0,count_s = 0, g_lim = strlen(gen), c_lim = strlen(cds);
+	char temp_c[7000] = { "" }, temp_g[7000] = { "" }, temp_buf[7000] = { "" };
+	_strupr(cds);
+	_strupr(gen);
+	while (j <= g_lim - 1)
+	{
+		count_s = 0;
+		while ((*(gen + j)) == (*(cds + n))) 
+		{
+			temp_buf[count_s] = *(gen + j);
+			j++; n++; count_s++;
+			if (j == g_lim || n== c_lim)
+			{
+				break;
+			}
+			
+		}
+		temp_buf[count_s] = '\0';
+		if (count_s>15)
+		{
+			_strlwr(temp_buf);
+			strcat(temp_c, temp_buf);
+			strcat(temp_c, "\r\n\r\n");
+			strcat(temp_g, temp_buf);
+		}
+		else
+		{
+			strcat(temp_g, temp_buf);  
+			n = n - count_s;
+		}
+		if (j == g_lim || n == c_lim)
+		{
+			break;
+		}
+		count_s = 0;
+		while ((*(gen + j)) != (*(cds + n)))
+		{
+			temp_buf[count_s] = *(gen + j);
+			j++; count_s++;
+			if (j == g_lim )
+			{
+				break;
+			}
+		}
+		temp_buf[count_s] = '\0';
+		strcat(temp_g, temp_buf);
+	}
+	for (j = 0; j <= strlen(temp_g)-1; j++)
+	{
+		*(gen + j) = temp_g[j];
+	}
+	strcpy(cds, temp_c);
+	if (n == c_lim)
+		return 1;
+	else
+		return 0;
+}
