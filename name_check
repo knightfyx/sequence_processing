@@ -1,0 +1,79 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+int name_check(char*cds, char*gen,float p)
+{
+	int i = 0, j = 0, g_lim = strlen(gen), c_lim = strlen(cds);
+	char chc = '\0', chg = *gen;
+		while (i <= c_lim-2)
+		{
+			chc = *(cds + i);
+			if (chc == '<' || chc == ' ')
+			{
+				i++;
+				continue;
+			}
+			if (chc == chg)
+			{
+				i++;
+				j++;
+				if (j == g_lim-1)
+				{
+					break;
+				}
+				chg = *(gen + j);
+
+			}
+			else
+			{
+				j++;
+				if (j == g_lim-1)
+				{
+					break;
+				}
+				chg = *(gen + j);
+			}
+		}
+		if (i >= (int)((c_lim-1)*p))//阈值,可以考虑打分用隐markov模型
+		{
+			return 1;
+		}
+		i = 0; j = 0; chc = *cds;
+		while (j <= g_lim - 2)
+		{
+			chg = *(gen + j);
+			if (chg == '<' || chg == ' ')
+			{
+				j++;
+				continue;
+			}
+			if (chg == chc)
+			{
+				i++;
+				j++;
+				if (i == c_lim - 1)
+				{
+					break;
+				}
+				chc = *(cds + i);
+
+			}
+			else
+			{
+				i++;
+				if (i == c_lim - 1)
+				{
+					break;
+				}
+				chc = *(cds + i);
+			}
+		}
+		if (j >= (int)((g_lim - 1)*p))//阈值,可以考虑打分用隐markov模型
+		{
+			return 1;
+		}
+		else
+		{
+			return 0;
+		}
+}
