@@ -1,0 +1,54 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<process.h>
+#include<direct.h>
+int autoseq(FILE *f, char(*name)[50], char(*seq)[7000])
+{
+	char ch=NULL, ctr=NULL,t=NULL;
+	int i = 0, ca = 0;
+	ctr = fgetc(f);
+	while (!feof(f)&&ca<=60)
+	{
+		if(ctr == '>') 
+		{
+			fgets(*name, 50, f);
+			if ((*(*name + strlen(*name) - 1)) != '\n')
+			{
+				while (fgetc(f) != '\n') {};
+				ctr=fgetc(f);
+				printf("%c", ctr);
+				*(*name + 47) = '\r';
+				*(*name + 48) = '\n';
+			}
+			for (i = 0; i < 7000;)
+			{
+				if ((ctr = fgetc(f)) == 'a' || ctr == 't' || ctr == 'c' || ctr == 'g' || ctr == 'A' || ctr == 'T' || ctr == 'C' || ctr == 'G')
+				{
+					*(*seq + i) = ctr;
+					i++;
+				}
+				else if (ctr == '>' || feof(f))
+					break;
+				else if (ctr == '\r' || ctr == '\n')
+					NULL;
+				else
+				    printf("sequence error occured on %ld,as %c\n", ftell(f), ctr);
+			}
+			i == 7000 ? (printf("sequence overload\n")) : NULL;
+			seq++;
+			name++;
+			ca++;
+			}
+		else
+		{
+        ctr= fgetc(f);
+		printf("the abandoned word is %c\n", ctr);
+		};
+	}
+	printf("sequence checked in, plz review the record above\n");
+	system("pause");
+	return ca;
+
+
+}
