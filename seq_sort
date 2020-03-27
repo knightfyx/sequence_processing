@@ -1,0 +1,63 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+int seq_sort(char(*name)[50],char(*temp)[50], int size)
+{
+	int left = 0, right = 0, i = 0, j = 0, k = 0,c=0, flag = 0;
+	if (size==1)
+	{
+		return 0;
+	}
+	left = size / 2;
+	right = size - left;
+	seq_sort(name, temp, left);
+	seq_sort(name + left, temp, right);
+	for (i = 0; i <= size-1; i++)
+	{
+		if (strcmp(*(name + j), *(name + left + k)) < 0)
+		{
+			strcpy_s(*(temp + i), *(name + j));
+			j++;
+			if (j == left) 
+			{
+				flag = 1;
+				break;
+			}
+		}
+		else
+		{
+			strcpy_s(*(temp + i), *(name + left + k));
+			k++;
+			if (k == right)
+			{
+				flag = -1;
+				break;
+			}
+		}
+	}
+	if (flag == 1)
+	{
+		for (; i != -1; i--)
+		{
+			strcpy_s(*(name + i), *(temp + i));
+		}
+		
+		
+		return 0;
+	}
+	else
+	{
+		for (c=left-1; c>=j; c--)
+		{
+			strcpy_s(*(name +right + c ), *(name + c));
+		}
+		for (; i > -1; i--)
+		{
+			strcpy_s(*(name + i), *(temp+i));
+		}
+		
+
+		return 0;
+	}
+	
+}
